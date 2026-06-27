@@ -1,0 +1,231 @@
+/* ============================================================
+   靓健时代（西安）健康科技有限公司 - 官网交互脚本 V1
+   ============================================================ */
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ---------- 导航栏滚动效果 ----------
+    const navbar = document.getElementById('navbar');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('section[id]');
+
+    function updateActiveNav() {
+        let scrollY = window.scrollY + 100;
+
+        // 定义子页面到父级下拉的映射
+        const childToParent = {
+            'about': 'about-dropdown',
+            'mission': 'about-dropdown',
+            'culture': 'about-dropdown',
+            'business': 'business-dropdown',
+            'business-membership': 'business-dropdown',
+            'business-meal': 'business-dropdown',
+            'business-app': 'business-dropdown',
+            'business-hardware': 'business-dropdown'
+        };
+
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.offsetHeight;
+            const sectionId = section.getAttribute('id');
+
+            if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + sectionId) {
+                        link.classList.add('active');
+                    }
+                });
+
+                // 高亮父级下拉
+                if (childToParent[sectionId]) {
+                    const parentDropdown = document.getElementById(childToParent[sectionId]);
+                    if (parentDropdown) {
+                        navLinks.forEach(link => link.classList.remove('active'));
+                        parentDropdown.querySelector('.nav-dropdown-toggle').classList.add('active');
+                    }
+                }
+            }
+        });
+    }
+
+    window.addEventListener('scroll', function () {
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+        updateActiveNav();
+    });
+
+    // ---------- 移动端菜单 ----------
+    const navToggle = document.getElementById('navToggle');
+    const navMenu = document.getElementById('navMenu');
+
+    navToggle.addEventListener('click', function () {
+        navToggle.classList.toggle('active');
+        navMenu.classList.toggle('active');
+    });
+
+    // 导航链接点击关闭移动端菜单
+    navLinks.forEach(link => {
+        link.addEventListener('click', function () {
+            navToggle.classList.remove('active');
+            navMenu.classList.remove('active');
+        });
+    });
+
+    // 移动端下拉菜单点击切换
+    const dropdownToggles = document.querySelectorAll('.nav-dropdown-toggle');
+    dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', function (e) {
+            if (window.innerWidth <= 768) {
+                e.preventDefault();
+                const parent = this.parentElement;
+                parent.classList.toggle('active');
+            }
+        });
+    });
+
+    // 下拉子链接点击关闭移动端菜单
+    const dropdownLinks = document.querySelectorAll('.dropdown-link');
+    dropdownLinks.forEach(link => {
+        link.addEventListener('click', function () {
+            navToggle.classList.remove('active');
+            navMenu.classList.remove('active');
+        });
+    });
+
+    // ---------- 回到顶部按钮 ----------
+    const backToTop = document.getElementById('backToTop');
+
+    window.addEventListener('scroll', function () {
+        if (window.scrollY > 500) {
+            backToTop.classList.add('visible');
+        } else {
+            backToTop.classList.remove('visible');
+        }
+    });
+
+    backToTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ---------- 数字递增动画 ----------
+    function animateNumbers() {
+        const statNumbers = document.querySelectorAll('.stat-number[data-target]');
+
+        statNumbers.forEach(number => {
+            const target = parseInt(number.getAttribute('data-target'));
+            const duration = 2000;
+            const step = target / (duration / 16);
+            let current = 0;
+
+            function updateNumber() {
+                current += step;
+                if (current >= target) {
+                    number.textContent = target;
+                } else {
+                    number.textContent = Math.floor(current);
+                    requestAnimationFrame(updateNumber);
+                }
+            }
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        updateNumber();
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            observer.observe(number);
+        });
+    }
+
+    animateNumbers();
+
+    // ---------- 滚动动画（Intersection Observer） ----------
+    function setupScrollAnimations() {
+        const animatedElements = document.querySelectorAll(
+            '.animate-fadeUp, .animate-slideLeft, .animate-slideRight, .animate-scaleIn'
+        );
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.15,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        animatedElements.forEach(el => {
+            observer.observe(el);
+        });
+    }
+
+    setupScrollAnimations();
+
+    // ---------- 联系表单处理 ----------
+    const contactForm = document.getElementById('contactForm');
+
+    if (contactForm) {
+        contactForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+
+            if (!name || !email) {
+                alert('请填写您的姓名和邮箱。');
+                return;
+            }
+
+            const submitBtn = contactForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '发送中...';
+            submitBtn.disabled = true;
+
+            setTimeout(() => {
+                contactForm.innerHTML = `
+                    <div class="form-success visible">
+                        <div class="success-icon">✅</div>
+                        <h4>留言已发送！</h4>
+                        <p>感谢您的留言，${name}！<br>我们会在1-2个工作日内与您联系。</p>
+                    </div>
+                `;
+            }, 1500);
+        });
+    }
+
+    // ---------- 平滑滚动 ----------
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                e.preventDefault();
+                const navHeight = navbar.offsetHeight;
+                const targetPosition = targetElement.offsetTop - navHeight;
+
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // ---------- 页面加载完成后的初始化 ----------
+    setTimeout(() => {
+        const heroAnimated = document.querySelectorAll('.hero .animate-fadeUp');
+        heroAnimated.forEach(el => el.classList.add('visible'));
+    }, 200);
+});
